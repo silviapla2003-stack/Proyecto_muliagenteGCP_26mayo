@@ -1,71 +1,140 @@
-# Asistente de Estudio y Certificación de Google Cloud (Multi-Agent System)
+# 🏛️ Asistente de Estudio y Certificación de Google Cloud
 
-Este proyecto es el trabajo final para el curso de sistemas multiagente. Se trata de un **Asistente de Estudio y Certificación de Google Cloud** inteligente y contextual, diseñado sobre el **Google ADK** (Agent Development Kit), utilizando **uv** como gestor de dependencias, **LlamaIndex con FAISS** local para el sistema RAG, y un **Servidor MCP propio** para exportar resúmenes y reportes de progreso.
+Este proyecto es una solución completa y robusta de **Sistema Multiagente** diseñada con el **Google ADK** (Agent Development Kit), gestionada con **uv** y fundamentada en datos mediante un pipeline de **RAG local (LlamaIndex + FAISS)**. 
 
----
-
-## 🏛️ Arquitectura del Sistema
-
-El sistema sigue un patrón de **Supervisor + Sub-agentes especializados**:
-
-1. **Agente Supervisor (`supervisor_agent`)**: El punto de contacto con el usuario. Analiza la intención del usuario y delega las tareas al sub-agente adecuado o invoca herramientas locales.
-2. **Sub-agente Experto RAG (`rag_expert_agent`)**: Especializado en responder dudas conceptuales y técnicas de Google Cloud. Utiliza **LlamaIndex** para consultar el índice de vectores local de **FAISS** con los apuntes en PDF indexados.
-3. **Sub-agente Evaluador (`evaluator_agent`)**: Diseña preguntas de examen tipo test interactivas (con opciones A, B, C y D) para evaluar el conocimiento del usuario sobre un tema basándose en la información real de los apuntes.
-4. **Servidor MCP Personalizado (`asistente-gcp-mcp-server`)**: Un servidor de protocolo de contexto de modelo (MCP) que expone la herramienta `exportar_resumen_y_progreso` para almacenar de forma estructurada en disco local resúmenes y reportes de fallos como archivos Markdown.
+La solución está completamente optimizada para conectarse a **Vertex AI en Google Cloud (GCP)** a través de tu cuenta de facturación y credenciales predeterminadas (ADC), eliminando las limitaciones de cuotas de las claves de API de AI Studio.
 
 ---
 
-## 🛠️ Requisitos Previos
+## 🗺️ Diagrama de Arquitectura y Flujo
 
-- **Python**: Versión `>=3.10`
-- **uv**: Gestor de paquetes rápido de Python. Si no lo tienes instalado, ejecútalo en PowerShell/Consola:
-  ```powershell
-  powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-  ```
-- **Clave de API de Gemini**: Consigue una gratis en [Google AI Studio](https://aistudio.google.com/app/apikey).
+```mermaid
+flowchart TD
+    User([👤 Usuario]) <--> |Consulta en Lenguaje Natural| Supervisor[🤖 Agente Supervisor]
+    
+    %% Delegación de Agentes
+    Supervisor <--> |Delegación RAG| RAGExpert[📚 Sub-Agente Experto RAG]
+    Supervisor <--> |Delegación Test| Evaluator[📝 Sub-Agente Evaluador]
+    
+    %% Acceso a Datos
+    RAGExpert -.-> |LlamaIndex Retrieval| FAISS[(🗄️ Vector Store FAISS Local)]
+    Evaluator -.-> |LlamaIndex Retrieval| FAISS
+    
+    %% Integración MCP
+    Supervisor <--> |Conexión SSE HTTP| MCPServer[🔌 Servidor MCP Local]
+    MCPServer -.-> |Escritura Persistente| MarkdownFiles[(📁 data/studio_notes/)]
+
+    classDef agents fill:#1a73e8,stroke:#0d47a1,color:#fff;
+    classDef storage fill:#34a853,stroke:#1b5e20,color:#fff;
+    classDef mcp fill:#f9ab00,stroke:#e65100,color:#fff;
+    class Supervisor,RAGExpert,Evaluator agents;
+    class FAISS,MarkdownFiles storage;
+    class MCPServer mcp;
+```
 
 ---
 
-## 🚀 Guía de Instalación y Arranque Rápido (Menos de 5 Minutos)
+## 🧠 Explicación Detallada de los Componentes
 
-### 1. Clonar e Instalar Dependencias
-Instala todas las dependencias requeridas (incluyendo las librerías ADK, LlamaIndex, FAISS, FastMCP):
+El sistema se compone de **4 piezas principales** que se comunican entre sí para ofrecer una experiencia de estudio integral:
+
+### 1. 👑 Agente Supervisor (`supervisor_agent`)
+- **Archivo**: [`src/asistente_gcp/supervisor/agent.py`](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/src/asistente_gcp/supervisor/agent.py)
+- **Función**: Actúa como el cerebro y punto de entrada de la conversación. Utiliza el clasificador de intenciones del LLM para determinar a qué especialista delegar.
+- **Herramientas**:
+  - `AgentTool(rag_expert_agent)`: Para resolver dudas de conceptos técnicos.
+  - `AgentTool(evaluator_agent)`: Para iniciar exámenes interactivos de prueba.
+  - `McpToolset`: Consume e integra las herramientas expuestas por el servidor MCP independiente.
+
+### 2. 📚 Sub-Agente Experto RAG (`rag_expert_agent`)
+- **Archivo**: [`src/asistente_gcp/agents/rag_expert.py`](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/src/asistente_gcp/agents/rag_expert.py)
+- **Función**: Responder dudas conceptuales y técnicas de Google Cloud basándose estrictamente en los documentos PDF indexados en la base de datos vectorial local.
+- **Mecanismo**: Utiliza un extractor `LlamaIndexRetrieval` que lee el índice FAISS. Si el documento no posee suficiente información, advierte al usuario con total transparencia.
+
+### 📝 3. Sub-Agente Evaluador (`evaluator_agent`)
+- **Archivo**: [`src/asistente_gcp/agents/evaluator.py`](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/src/asistente_gcp/agents/evaluator.py)
+- **Función**: Diseñar exámenes tipo test interactivos para certificar tus conocimientos.
+- **Mecanismo**: Al igual que el experto RAG, consume el índice de vectores de LlamaIndex para extraer datos reales del material de estudio y estructurar preguntas con respuestas múltiples (A, B, C, D). Evalúa tus respuestas y te proporciona explicaciones rigurosas de por qué cada opción es correcta o incorrecta.
+
+### 🔌 4. Servidor MCP Propio (`asistente-gcp-mcp-server`)
+- **Archivo**: [`src/asistente_gcp/mcp_server/server.py`](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/src/asistente_gcp/mcp_server/server.py)
+- **Función**: Un servidor de Model Context Protocol (MCP) que se ejecuta como un microservicio independiente mediante transporte SSE (Server-Sent Events) sobre HTTP.
+- **Herramienta Expuesta**: `exportar_resumen_y_progreso`. 
+  - Recibe un `titulo` y `contenido` en Markdown, y un `tipo` (`resumen` o `reporte_errores`).
+  - Guarda los archivos en disco dentro de subcarpetas organizadas en `data/studio_notes/resumenes` o `data/studio_notes/reportes_errores` de forma 100% persistente.
+
+---
+
+## 🛠️ Guía de Configuración y Despliegue Local
+
+Sigue estos pasos para arrancar e interactuar con el proyecto en tu máquina:
+
+### 1. Requisitos e Instalación
+Asegúrate de contar con Python `>=3.10` y `uv` instalado. Ejecuta el comando de sincronización de dependencias para crear y configurar el entorno virtual:
 ```bash
 uv sync
 ```
 
-### 2. Configurar Variables de Entorno
-Crea tu archivo de entorno local a partir de la plantilla y edítalo para introducir tu `GEMINI_API_KEY`:
+### 2. Configurar Autenticación con Google Cloud (Vertex AI)
+Para facturar el consumo de cómputo y embeddings a tu cuenta de Google Cloud (GCP) utilizando las credenciales predeterminadas de tu terminal:
 ```bash
-cp .env.example .env
+gcloud auth application-default login
+gcloud services enable aiplatform.googleapis.com
 ```
-*(Abre el archivo `.env` y sustituye `tu_gemini_api_key_aqui` por tu clave de API de Gemini real)*.
 
-### 3. Indexar tus Apuntes (RAG local)
-1. Coloca tus apuntes en formato **PDF** dentro del directorio recién creado: `data/apuntes/`.
-2. Ejecuta el pipeline de indexación para generar los embeddings vectoriales con Gemini y estructurar el índice FAISS:
+### 3. Configurar tu Archivo `.env`
+Duplica la plantilla y configúrala de la siguiente manera:
+```env
+MODEL_PROVIDER=vertex
+GOOGLE_CLOUD_PROJECT=project3grupo2
+GOOGLE_CLOUD_LOCATION=us-central1
+STUDY_DIR=./data/studio_notes
+```
+
+### 4. Cargar e Indexar tus PDFs de Apuntes
+1. **Borra** cualquier archivo de prueba en `data/apuntes/`.
+2. **Pega tus apuntes reales** de Google Cloud en formato PDF dentro del directorio `data/apuntes/`.
+3. Ejecuta el script indexador en tu consola:
    ```bash
    uv run notebooks/indexar_apuntes.py
    ```
-   *(El índice vectorial generado se guardará de forma persistente en `data/storage/`)*.
-
-### 4. Iniciar el Servidor MCP Local
-En una ventana de terminal independiente, arranca el servidor MCP local:
-```bash
-uv run python src/asistente_gcp/mcp_server/server.py
-```
-*(El servidor se iniciará en `http://127.0.0.1:9002/sse`)*.
-
-### 5. Iniciar la Interfaz Web del Agente (Google ADK Web UI)
-En tu terminal principal, arranca la interfaz gráfica interactiva del Google ADK:
-```bash
-uv run adk web src/asistente_gcp
-```
-¡Listo! Abre en tu navegador [http://localhost:8000](http://localhost:8000), selecciona el agente **`supervisor_agent`** y comienza a estudiar.
+   *Este script utilizará el modelo `text-embedding-004` de Vertex AI para vectorizar tus PDFs y guardará la base de datos FAISS en `data/storage/`.*
 
 ---
 
-## 📝 Ejemplos de Interacciones a Probar
-- **Pregunta teórica**: *"¿Qué diferencia hay entre Cloud Spanner y Cloud SQL según mis apuntes?"* (El supervisor llamará al Experto RAG).
-- **Auto-evaluación**: *"Hazme un test tipo examen sobre IAM en Google Cloud"* (El supervisor llamará al Evaluador).
-- **Exportar información**: *"Genera un resumen sobre los servicios de almacenamiento de GCP y expórtalo como nota"* (El supervisor llamará al Experto RAG y luego guardará el resultado mediante la herramienta del servidor MCP en `data/studio_notes/resumenes/`).
+## 🚀 Cómo Iniciar los Servicios de la Aplicación
+
+Para iniciar tu ecosistema multiagente, requerirás abrir dos terminales:
+
+### Paso A: Arrancar el Servidor MCP (Terminal 1)
+Inicia el microservicio de persistencia en disco:
+```bash
+uv run python src/asistente_gcp/mcp_server/server.py
+```
+*(Se mantendrá a la escucha en http://127.0.0.1:9002/sse)*
+
+### Paso B: Lanzar la Interfaz Gráfica ADK Web (Terminal 2)
+Arranca el portal web interactivo para comunicarte con tus agentes:
+```bash
+uv run adk web src/asistente_gcp
+```
+Una vez iniciado, abre tu navegador y dirígete a:
+👉 **[http://localhost:8000](http://localhost:8000)**
+
+---
+
+## 💬 Flujos de Conversación Ideales para Probar (Casos de Uso)
+
+Cuando interactúes con tu **`supervisor_agent`** en la interfaz web, prueba estos tres flujos clave para demostrar el potencial de tu solución:
+
+1. **Resolución de dudas (RAG Grounding)**:
+   - *Tú*: "¿Cuáles son los conceptos más importantes descritos en mis apuntes?"
+   - *Resultado*: El supervisor detecta la intención de aprendizaje, delega en `rag_expert_agent`, el cual realiza una búsqueda semántica en FAISS y te devuelve la explicación exacta fundamentada en tus apuntes.
+
+2. **Evaluación de conocimiento (Sub-agente Evaluador)**:
+   - *Tú*: "Hazme un examen tipo test de 3 preguntas de opción múltiple sobre el tema de los apuntes."
+   - *Resultado*: El supervisor delega en `evaluator_agent`. Este extraerá conceptos del RAG, te formulará las preguntas interactivamente, esperará a que elijas (A, B, C o D) y te dará retroalimentación detallada.
+
+3. **Persistencia y Exportación (Servidor MCP)**:
+   - *Tú*: "Genera un resumen sobre los temas de mis apuntes y guárdalo usando la herramienta de exportación."
+   - *Resultado*: El supervisor delega la redacción del resumen al Experto RAG, y una vez generado, el supervisor invocará la herramienta `exportar_resumen_y_progreso` del servidor MCP para crear automáticamente el archivo `.md` estructurado en `data/studio_notes/resumenes/` de forma persistente.
