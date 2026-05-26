@@ -1,0 +1,22 @@
+[project]
+name = "asistente-gcp"
+version = "0.1.0"
+description = "Asistente de Estudio y Certificación de Google Cloud con arquitectura multiagente"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai>=0.1.1",
+    "google-adk[extensions]>=1.26.0",
+    "litellm>=1.0",
+    "llama-index>=0.10.0",
+    "llama-index-embeddings-google-genai>=0.4.0",
+    "llama-index-vector-stores-faiss>=0.1.0",
+    "faiss-cpu>=1.7.4",
+    "mcp>=0.1.0",
+    "python-dotenv>=1.0.1",
+    "pypdf>=4.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
