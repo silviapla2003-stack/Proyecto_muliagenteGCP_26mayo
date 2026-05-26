@@ -1,0 +1,13 @@
+# Entorno virtual y dependencias
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Configuración y credenciales
+.env
+
+# Archivos de datos del RAG (FAISS persistente y PDFs locales si es necesario)
+data/storage/
+data/studio_notes/
