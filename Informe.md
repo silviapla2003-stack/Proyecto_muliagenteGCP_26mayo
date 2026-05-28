@@ -217,7 +217,8 @@ Los fragmentos de texto más cercanos semánticamente a la consulta del usuario 
 
 ### 5.1 Caso de Uso 1: Consulta Conceptual con RAG
 
-> **[ INSERTAR CAPTURA DE PANTALLA — localhost:8000 ]**
+> <img width="886" height="314" alt="image" src="https://github.com/user-attachments/assets/ca4a5ba3-5d81-4831-bb79-595f06b5e0d1" />
+
 
 *Análisis*: El usuario pregunta sobre un concepto técnico de sus apuntes. La traza muestra al Supervisor delegando en el Experto RAG, el cual ejecuta una consulta semántica sobre FAISS y devuelve una respuesta enriquecida sin inventar datos.
 
@@ -225,7 +226,8 @@ Los fragmentos de texto más cercanos semánticamente a la consulta del usuario 
 
 ### 5.2 Caso de Uso 2: Examen Interactivo de Certificación
 
-> **[ INSERTAR CAPTURA DE PANTALLA — localhost:8000 ]**
+> <img width="886" height="347" alt="image" src="https://github.com/user-attachments/assets/d1d3660d-ffa0-46c0-adff-43db80a9fd5a" />
+
 
 *Análisis*: El usuario solicita "Hazme un test". Se aprecia la delegación inmediata al sub-agente Evaluador, que diseña una pregunta con cuatro opciones (A, B, C, D) retando al estudiante antes de revelar la respuesta correcta.
 
@@ -233,7 +235,8 @@ Los fragmentos de texto más cercanos semánticamente a la consulta del usuario 
 
 ### 5.3 Caso de Uso 3: Guardado a Disco vía Servidor MCP
 
-> **[ INSERTAR CAPTURA DE PANTALLA — localhost:8000 ]**
+> <img width="886" height="293" alt="image" src="https://github.com/user-attachments/assets/95eafec7-fdc7-48f5-84d9-f8fad4c9ea29" />
+
 
 *Análisis*: Se simula la orden de exportación física del resumen. El Agente Supervisor invoca `exportar_resumen_y_progreso`. La consola del servidor MCP registra la petición SSE y la UI reporta la ruta física del archivo `.md` generado en `data/studio_notes/resumenes/`.
 
