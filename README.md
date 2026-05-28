@@ -1,16 +1,16 @@
+# 📘 Documentación Oficial del Proyecto
+
+> [!IMPORTANT]
+> Toda la justificación teórica, el desglose arquitectónico minucioso, el análisis de componentes, el marco de pruebas y **las capturas de conversaciones reales en producción** se encuentran completamente documentadas y detalladas en el archivo principal:
+> 🔗 **[Informe.md](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/Informe.md)**
+
+---
+
 # 🏛️ Asistente de Estudio y Certificación de Google Cloud (Multi-Agent System)
 
 Este proyecto es una solución de **Sistema Multiagente** diseñada con el **Google ADK** (Agent Development Kit), gestionada con **uv** y fundamentada en datos mediante un pipeline de **RAG local (LlamaIndex + FAISS)**. 
 
 La solución está completamente optimizada para conectarse a **Vertex AI en Google Cloud (GCP)** a través de tu cuenta de facturación y credenciales predeterminadas (ADC), eliminando las limitaciones de cuotas de las claves de API de AI Studio.
-
----
-
-## 📘 Documentación Oficial del Proyecto
-
-> [!IMPORTANT]
-> Toda la justificación teórica, el desglose arquitectónico minucioso, el análisis de componentes, el marco de pruebas y **las capturas de conversaciones reales en producción** se encuentran completamente documentadas y detalladas en el archivo:
-> 🔗 **[Informe.md](file:///c:/Users/JOSE/Desktop/App%20conchita/Proyecto_mulagenteGCP/Informe.md)**
 
 ---
 
